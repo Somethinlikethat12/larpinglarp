@@ -39,7 +39,7 @@ function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2)
 addEventListener('resize',resize);resize();
 const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const keys={},mouse={x:W/2,y:H/2,down:false,active:false},touch={x:0,y:0,fire:false};
-let state='menu',player,enemies=[],bullets=[],enemyBullets=[],orbs=[],particles=[],floats=[],decor=[],wave=1,kills=0,score=0,clock=0,spawnTimer=0,waveTimer=0,shake=0,flash=0,last=0,toastTimer=0,audio=null,best=+(localStorage.getItem('voidBest')||0);
+let state='menu',player,enemies=[],bullets=[],enemyBullets=[],orbs=[],particles=[],floats=[],decor=[],wave=1,waveRemaining=0,kills=0,score=0,clock=0,spawnTimer=0,waveTimer=0,shake=0,flash=0,last=0,toastTimer=0,audio=null,best=+(localStorage.getItem('voidBest')||0);
 $('best').textContent=best;
 function sound(freq=440,dur=.06,type='sine',vol=.035){try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,audio.currentTime);g.gain.setValueAtTime(vol,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}catch(e){}}
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');toastTimer=1.8}
@@ -47,7 +47,7 @@ function hideAll(){['menu','manual','levelup','pause','gameover'].forEach(id=>$(
 function show(id){hideAll();$(id).classList.remove('hide')}
 function reset(){
  player={x:0,y:0,r:13,hp:100,maxHp:100,speed:245,damage:22,rate:.22,fire:0,bulletSpeed:650,range:560,projectiles:1,pierce:0,crit:.08,critMult:1.8,regen:0,armor:0,magnet:105,dash:0,dashCd:0,dashTime:0,invuln:0,level:1,xp:0,nextXp:30,orbBonus:0,drone:0,droneTimer:0};
- enemies=[];bullets=[];enemyBullets=[];orbs=[];particles=[];floats=[];wave=1;kills=0;score=0;clock=0;spawnTimer=.5;waveTimer=0;shake=0;flash=0;
+ enemies=[];bullets=[];enemyBullets=[];orbs=[];particles=[];floats=[];wave=1;kills=0;score=0;clock=0;spawnTimer=.5;waveTimer=0;waveRemaining=8;shake=0;flash=0;
  decor=Array.from({length:100},()=>({x:rand(-1500,1500),y:rand(-1500,1500),r:rand(.5,2),a:rand(.08,.42)}));
  $('hud').style.display='block';updateHud();
 }
@@ -82,7 +82,7 @@ function killEnemy(e){
  let i=enemies.indexOf(e);if(i<0)return;enemies.splice(i,1);kills++;score+=e.type==='boss'?2500:e.type==='brute'?160:100;
  burst(e.x,e.y,e.color,e.type==='boss'?45:13,e.type==='boss'?300:180);
  for(let n=0;n<(e.type==='boss'?18:e.type==='brute'?4:2);n++)orbs.push({x:e.x+rand(-12,12),y:e.y+rand(-12,12),r:5,vx:rand(-50,50),vy:rand(-50,50),xp:e.xp/ (e.type==='boss'?18:e.type==='brute'?4:2),life:14});
- if(e.type==='boss'){score+=3000;toast('WARDEN NEUTRALIZED · +2500');player.hp=Math.min(player.maxHp,player.hp+35);waveTimer=2}
+ if(e.type==='boss'){score+=3000;toast('WARDEN NEUTRALIZED · +2500');player.hp=Math.min(player.maxHp,player.hp+35);waveRemaining=0;waveTimer=2}
 }
 function shoot(){
  const target=mouse.active?worldPos(mouse.x,mouse.y):nearestEnemy();
@@ -101,9 +101,10 @@ function update(dt){
  if(player.dashTime>0){player.x+=player.dashVx*dt;player.y+=player.dashVy*dt;player.dashTime-=dt}else{player.x+=dx*player.speed*dt;player.y+=dy*player.speed*dt}
  if((mouse.down||touch.fire||(!mouse.active&&keys.f))&&player.fire<=0){shoot();player.fire=player.rate}
  if(player.drone){player.droneTimer-=dt;if(player.droneTimer<=0){player.droneTimer=1.15;let t=nearestEnemy();if(t){let a=Math.atan2(t.y-player.y,t.x-player.x);bullets.push({x:player.x+Math.cos(a)*25,y:player.y+Math.sin(a)*25,vx:Math.cos(a)*500,vy:Math.sin(a)*500,r:3,life:1.2,damage:player.damage*.55,pierce:0,hit:[]});burst(player.x,player.y,'#ffd166',3,50)}}}
- spawnTimer-=dt;let cap=Math.min(30,7+wave*2);if(spawnTimer<=0&&enemies.length<cap){let t=Math.random()<Math.min(.12,wave*.012)?'brute':Math.random()<.18+Math.min(.22,wave*.01)?'stalker':'drifter';spawnEnemy(t);spawnTimer=Math.max(.24,1.05-wave*.045)}
- if(wave%5===0&&!enemies.some(e=>e.type==='boss')&&waveTimer===0){spawnEnemy('boss');toast('WARNING · WARDEN SIGNATURE DETECTED');waveTimer=-1}
- if(enemies.length===0&&waveTimer>0){waveTimer-=dt;if(waveTimer<=0){wave++;spawnTimer=1.5;waveTimer=0;toast('WAVE '+String(wave).padStart(2,'0')+' · THEY KEEP COMING');score+=wave*100}}
+ spawnTimer-=dt;let cap=Math.min(30,7+wave*2);if(spawnTimer<=0&&enemies.length<cap&&waveRemaining>0){let t=Math.random()<Math.min(.12,wave*.012)?'brute':Math.random()<.18+Math.min(.22,wave*.01)?'stalker':'drifter';spawnEnemy(t);waveRemaining--;spawnTimer=Math.max(.24,1.05-wave*.045)}
+ if(wave%5===0&&waveRemaining===0&&enemies.length===0&&!enemies.some(e=>e.type==='boss')&&waveTimer===0){spawnEnemy('boss');toast('WARNING · WARDEN SIGNATURE DETECTED');waveTimer=-1}
+ if(waveRemaining===0&&enemies.length===0&&waveTimer===0&&wave%5!==0)waveTimer=2;
+ if(enemies.length===0&&waveTimer>0){waveTimer-=dt;if(waveTimer<=0){wave++;waveRemaining=8+wave*3;spawnTimer=1.5;waveTimer=0;toast('WAVE '+String(wave).padStart(2,'0')+' · THEY KEEP COMING');score+=wave*100}}
  for(let e of enemies){
   e.phase+=dt*2;e.hit=Math.max(0,e.hit-dt);let a=Math.atan2(player.y-e.y,player.x-e.x);e.angle=a;
   if(e.type==='boss'){let orbit=Math.sin(clock*.6)*.35;a+=orbit;if(dist(e,player)>260){e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt}else{e.x+=Math.cos(a+Math.PI/2)*e.speed*.55*dt;e.y+=Math.sin(a+Math.PI/2)*e.speed*.55*dt}e.attack-=dt;if(e.attack<=0){e.attack=2.2;for(let k=0;k<12;k++){let ang=k*TAU/12+clock*.25;enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(ang)*180,vy:Math.sin(ang)*180,r:6,damage:13,life:4,color:'#ff547e'})}sound(110,.25,'sawtooth',.035)}}
