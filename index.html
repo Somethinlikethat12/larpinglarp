@@ -86,9 +86,9 @@ const relicPool=[
 {g:'♨',n:'EMBERBITE',d:'Strikes ignite enemies, dealing damage over time.',t:'PYRE',f:p=>p.flame+=10},
 {g:'⟡',n:'GHOST STEP',d:'Dodging costs less Resolve and recharges faster.',t:'MOVEMENT',f:p=>{p.dodgeCd*=.68;p.st=Math.min(100,p.st+25)}},
 {g:'✣',n:'CHOIR OF ONE',d:'Every third strike releases a damaging echo.',t:'RHYTHM',f:p=>p.echo++},
-{g:'⌖',n:'HUNTER'S EYE',d:'Critical chance rises by 14%.',t:'INSTINCT',f:p=>p.crit=Math.min(.7,p.crit+.14)},
+{g:'⌖',n:'HUNTER’S EYE',d:'Critical chance rises by 14%.',t:'INSTINCT',f:p=>p.crit=Math.min(.7,p.crit+.14)},
 {g:'♢',n:'QUICKENED BLOOD',d:'Strike 18% faster.',t:'TEMPO',f:p=>p.rate=Math.max(.2,p.rate*.82)},
-{g:'⚒',n:'PILGRIM'S HOOK',d:'Increase strike reach by 38. Gain more ash from fallen foes.',t:'REACH',f:p=>{p.reach+=38;p.ashGain+=.5}}
+{g:'⚒',n:'PILGRIM’S HOOK',d:'Increase strike reach by 38. Gain more ash from fallen foes.',t:'REACH',f:p=>{p.reach+=38;p.ashGain+=.5}}
 ];
 function offerRelics(){let opts=[...relicPool].sort(()=>Math.random()-.5).slice(0,3);$('relics').innerHTML='';opts.forEach(r=>{let b=document.createElement('button');b.className='relic';b.innerHTML='<div class="glyph">'+r.g+'</div><h3>'+r.n+'</h3><p>'+r.d+'</p><small>'+r.t+'</small>';b.onclick=()=>{r.f(p);room++;state='play';hide();makeRoom();updateHUD();say('SANCTUM '+roman[(room-1)%12]+' · DESCEND')};$('relics').appendChild(b)});show('relicLayer')}
 function draw(){c.save();if(shake)c.translate(rand(-shake,shake),rand(-shake,shake));c.fillStyle='#100e0d';c.fillRect(0,0,w,h);let ox=w/2-p.x,oy=h/2-p.y;
