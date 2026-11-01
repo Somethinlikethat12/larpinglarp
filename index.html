@@ -109,6 +109,8 @@ function draw(){c.save();if(shake)c.translate(rand(-shake,shake),rand(-shake,sha
  if(e.type==='cantor'){c.beginPath();c.moveTo(0,-e.r);c.lineTo(e.r,e.r);c.lineTo(-e.r,e.r);c.closePath();c.fill();c.strokeStyle='#e1d7ca';c.stroke();c.fillStyle='#201a22';c.fillRect(-3,-1,6,9)}
  if(e.type==='prior'){c.beginPath();for(let i=0;i<16;i++){let r=i%2?e.r*.78:e.r,a=i*TAU/16;c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill();c.strokeStyle='#e7b28a';c.lineWidth=3;c.stroke();c.fillStyle='#21110f';c.beginPath();c.arc(0,0,e.r*.42,0,TAU);c.fill();c.fillStyle='#ffe0b8';c.fillRect(-e.r*.25,-2,e.r*.5,4)}
  c.restore();c.shadowBlur=0;if(e.hp<e.max){c.fillStyle='#38291f';c.fillRect(x-e.r,y-e.r-10,e.r*2,3);c.fillStyle='#d47b50';c.fillRect(x-e.r,y-e.r-10,e.r*2*e.hp/e.max,3)}}
+ // Cantor ground marks: show the exact danger zone before the burst lands
+ for(let e of foes){if(e.type==='cantor'&&e.state==='mark'){let tx=e.targetX+ox,ty=e.targetY+oy,r=58;c.fillStyle='rgba(185,91,70,'+(0.08+0.10*Math.sin(time*24))+')';c.beginPath();c.arc(tx,ty,r,0,TAU);c.fill();c.strokeStyle='#d28a68';c.lineWidth=2;c.setLineDash([5,6]);c.beginPath();c.arc(tx,ty,r,0,TAU);c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(tx-r,ty);c.lineTo(tx+r,ty);c.moveTo(tx,ty-r);c.lineTo(tx,ty+r);c.stroke()}}
  // projectile shots
  for(let s of shots){if(s.vx){c.fillStyle='#f4b18a';c.shadowBlur=12;c.shadowColor='#c65b42';c.beginPath();c.arc(s.x+ox,s.y+oy,s.r,0,TAU);c.fill();c.shadowBlur=0}}
  // particles / text
